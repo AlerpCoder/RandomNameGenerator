@@ -1,61 +1,44 @@
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import java.io.IOException;
 import java.util.*;
 
 public class RandomNameGenerator {
     private static HashSet<String> names = new HashSet<>();
 
-    public HashSet<String> getNames() {
-        return names;
-    }
-
-    public void setNames(HashSet<String> names) {
-        this.names = names;
-    }
-
-    private static void namensParser(/*Path path*/) throws IOException {
-        for (int i = 97; i < 123; i++) {
-            char letter = (char) i;
+    private static void namesParser() throws IOException {
+        for (int letter = 97; letter < 123; letter++) {
             String html = "http://www.vornamen.ch/namensliste/" + letter + ".html";
-            Document doc = Jsoup.connect(html).get();
-            String lastPage = doc.select("a[title*=Zur letzten Seite]").attr("href");
+            String lastPage = (Jsoup.connect(html).get()).
+                    select("a[title*=Zur letzten Seite]").attr("href");
 
-            int end = 0;
-            if (lastPage != "") {
+            int end;
+            if (Objects.equals(lastPage, "")) {
                 end = Integer.parseInt((String) lastPage.subSequence(2, lastPage.indexOf('.')));
             } else {
                 end = 1;
             }
             for (int j = 1; j <= end; j++) {
-                String newhtml = "http://www.vornamen.ch/namensliste/" + letter + "," + j + ".html";
-                Document newdoc = Jsoup.connect(newhtml).get();
-                strtok(newdoc.select("a[href*=../name/]").text(), (char) i);
+                String newHtml = "http://www.vornamen.ch/namensliste/" + letter + "," + j + ".html";
+                strtok((Jsoup.
+                        connect(newHtml).get()).
+                        select("a[href*=../name/]").text());
             }
-
         }
     }
 
-    private static String[] strtok(String text, char letter) throws IOException {
+    private static void strtok(String text) throws IOException {
         StringTokenizer stok = new StringTokenizer(text);
-        String tokens[] = new String[stok.countTokens()];
-        for (int i = 0; i < tokens.length; i++) {
+        for (int i = 0; i < stok.countTokens(); i++) {
             names.add(stok.nextToken());
         }
-        return tokens;
     }
 
-    private static String randomNameGenerator() throws IOException {
-        namensParser();
-        List<String> namen = new ArrayList<>(names.size());
-        int i = 0;
-        for (String name : names) {
-            namen.add(name);
-        }
-        Random random = new Random();
-        int randomNumber = random.nextInt(names.size());
-        return namen.get(randomNumber);
 
+    private static String randomNameGenerator() throws IOException {
+        namesParser();
+        List<String> namen = new ArrayList<>(names.size());
+        namen.addAll(names);
+        return namen.get(new Random().nextInt(names.size()));
     }
 
     public static void main(String[] args) throws IOException {
