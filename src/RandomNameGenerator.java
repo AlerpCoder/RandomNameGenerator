@@ -7,30 +7,31 @@ public class RandomNameGenerator {
     private static boolean isBoy=false;
 
     private static void namesParser() throws IOException {
+        userInteraction();
+
         String maleFemale;
-        /*diese Abfrage ist noch falsch*/
         if(isBoy){
             maleFemale="jungennamen";
         }else{
             maleFemale="maedchennamen";
         }
         for (int letter = 97; letter < 123; letter++) {
-            String html = "http://www.vornamen.ch/"+maleFemale+"/" + letter + ".html";
+            String html = "http://www.vornamen.ch/"+maleFemale+"/" + (char)letter + ".html";
             String lastPage = (Jsoup.connect(html).get()).
                     select("a[title*=Zur letzten Seite]").attr("href");
 
             int end;
-            if (Objects.equals(lastPage, "")) {
+            if (lastPage.compareTo("")!=0) {
                 end = Integer.parseInt((String) lastPage.subSequence(2, lastPage.indexOf('.')));
             } else {
                 end = 1;
             }
             for (int j = 1; j <= end; j++) {
-                String newHtml = "http://www.vornamen.ch/"+maleFemale+"/" + letter + "," + j + ".html";
+                String newHtml = "http://www.vornamen.ch/"+maleFemale+"/" +(char) letter + "," + j + ".html";
                 strtok((Jsoup.connect(newHtml).get()).
+                        removeClass("trend").
                         removeClass("jungencharts").
                         removeClass("maedchencharts").
-                        removeClass("trend").
                         select("a[href*=../name/]").text());
             }
         }
@@ -48,12 +49,13 @@ public class RandomNameGenerator {
         namesParser();
         List<String> namen = new ArrayList<>(names.size());
         namen.addAll(names);
+        System.out.println(namen.size());
         return namen.get(new Random().nextInt(names.size()));
     }
 
     private static void userInteraction() {
         Scanner input= new Scanner(System.in);
-        System.out.println("Schould the name for a girl (girl, g, m,) or a boy (boy, b, j)? (Please insert on word in from the brackets)");
+        System.out.println("Schould the name for a girl (girl, g, m,) or a boy (boy, b, j)? (Please insert one word/character in the free space)");
         String gender= input.next();
         genderDecider(gender);
     }
@@ -78,7 +80,6 @@ public class RandomNameGenerator {
     }
 
     public static void main(String[] args) throws IOException {
-        userInteraction();
         System.out.println(randomNameGenerator());
     }
 
