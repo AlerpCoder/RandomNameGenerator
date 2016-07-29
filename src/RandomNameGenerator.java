@@ -1,3 +1,4 @@
+/*Copyright AlerpCoder*/
 import org.jsoup.Jsoup;
 import java.io.IOException;
 import java.util.*;
@@ -49,7 +50,6 @@ public class RandomNameGenerator {
         namesParser();
         List<String> namen = new ArrayList<>(names.size());
         namen.addAll(names);
-        System.out.println(namen.size());
         return namen.get(new Random().nextInt(names.size()));
     }
 
