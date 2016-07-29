@@ -8,6 +8,7 @@ public class RandomNameGenerator {
 
     private static void namesParser() throws IOException {
         String maleFemale;
+        /*diese Abfrage ist noch falsch*/
         if(isBoy){
             maleFemale="jungennamen";
         }else{
