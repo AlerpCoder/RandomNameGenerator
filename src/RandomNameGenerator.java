@@ -12,6 +12,8 @@ public class RandomNameGenerator {
     private static boolean isBoy = false;
 
     public static void namesParser() throws IOException, URISyntaxException {
+        //TODO Parallel mit Threads schreiben damit
+        Thread[] threads = new Thread[3];
         File file = new File(RandomNameGenerator.class.getClassLoader().getResource("RandomNameGenerator.class").toURI());
         String txtName;
         if (isBoy) {
@@ -22,6 +24,7 @@ public class RandomNameGenerator {
 
         File newfile = new File(file.getParentFile().toString() + txtName);
         FileReader reader;
+
         if (newfile.exists()) {
             reader = new FileReader(newfile);
             BufferedReader buffer = new BufferedReader(reader);
@@ -33,31 +36,26 @@ public class RandomNameGenerator {
             } else {
                 maleFemale = "maedchennamen";
             }
-            for (int letter = 97; letter < 123; letter++) {
-                String html = "http://www.vornamen.ch/" + maleFemale + "/" + (char) letter + ".html";
-                String lastPage = (Jsoup.connect(html).get()
-                        .select("a[title*=Zur letzten Seite]").attr("href"));
 
-                int end;
-                if (lastPage.compareTo("") != 0) {
-                    end = Integer.parseInt((String) lastPage.subSequence(2, lastPage.indexOf('.')));
-                } else {
-                    end = 1;
-                }
-                for (int j = 1; j <= end; j++) {
-                    String newHtml = "http://www.vornamen.ch/" + maleFemale + "/" + (char) letter + "," + j + ".html";
-                    strtok((Jsoup.connect(newHtml).get()).
-                            removeClass("trend").
-                            removeClass("jungencharts").
-                            removeClass("maedchencharts").
-                            select("a[href*=../name/]").text());
+            int start = 97;
+            int mid = (97 - 123) / 3;
+            int end;
+            int rest = (97 - 123) % 3;
+            for (int i = 0; i < threads.length; i++) {
+                end = start + mid;
+
+                threads[i] = new WebsiteDL(start, end, maleFemale);
+                start = start + mid;
+                end= (i==0)?end=end+rest;
+                if (i == 0) {
+                    end += rest;
+
                 }
             }
-
             saveNames(file);
         }
-
     }
+
 
     public static void saveNames(File file) throws IOException, URISyntaxException {
         String txtName;
@@ -116,10 +114,57 @@ public class RandomNameGenerator {
         }
     }
 
+
+    static class WebsiteDL extends Thread {
+        /*websiteDL(int start, int end){*/
+        int start;
+        int end;
+        String maleFemale;
+        RandomNameGenerator test;
+
+        public WebsiteDL(int start, int end, String maleFemale) {
+            this.start = start;
+            this.end = end;
+            this.maleFemale = maleFemale;
+            this.test = test;
+        }
+
+        public void run() {
+            for (int letter = start; letter < end; letter++) {
+                String html = "http://www.vornamen.ch/" + maleFemale + "/" + (char) letter + ".html";
+                String lastPage = null;
+                try {
+                    lastPage = (Jsoup.connect(html).get()
+                            .select("a[title*=Zur letzten Seite]").attr("href"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                int end;
+                if (lastPage.compareTo("") != 0) {
+                    end = Integer.parseInt((String) lastPage.subSequence(2, lastPage.indexOf('.')));
+                } else {
+                    end = 1;
+                }
+                for (int j = 1; j <= end; j++) {
+                    String newHtml = "http://www.vornamen.ch/" + maleFemale + "/" + (char) letter + "," + j + ".html";
+                    try {
+                        strtok((Jsoup.connect(newHtml).get()).
+                                removeClass("trend").
+                                removeClass("jungencharts").
+                                removeClass("maedchencharts").
+                                select("a[href*=../name/]").text());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+
     public static void main(String[] args) throws IOException, URISyntaxException {
         userInteraction();
         System.out.println(randomNameGenerator());
     }
-
-
 }
