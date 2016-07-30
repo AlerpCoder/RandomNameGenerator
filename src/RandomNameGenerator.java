@@ -1,44 +1,80 @@
 /*Copyright AlerpCoder*/
+
 import org.jsoup.Jsoup;
-import java.io.IOException;
+
+import java.io.*;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class RandomNameGenerator {
     private static HashSet<String> names = new HashSet<>();
-    private static boolean isBoy=false;
 
-    private static void namesParser() throws IOException {
-        userInteraction();
+    private static boolean isBoy = false;
 
-        String maleFemale;
-        if(isBoy){
-            maleFemale="jungennamen";
-        }else{
-            maleFemale="maedchennamen";
+    public static void namesParser() throws IOException, URISyntaxException {
+        File file = new File(RandomNameGenerator.class.getClassLoader().getResource("RandomNameGenerator.class").toURI());
+        String txtName;
+        if (isBoy) {
+            txtName = "\\namesBoy.txt";
+        } else {
+            txtName = "\\namesGirl.txt";
         }
-        for (int letter = 97; letter < 123; letter++) {
-            String html = "http://www.vornamen.ch/"+maleFemale+"/" + (char)letter + ".html";
-            String lastPage = (Jsoup.connect(html).get()).
-                    select("a[title*=Zur letzten Seite]").attr("href");
 
-            int end;
-            if (lastPage.compareTo("")!=0) {
-                end = Integer.parseInt((String) lastPage.subSequence(2, lastPage.indexOf('.')));
+        File newfile = new File(file.getParentFile().toString() + txtName);
+        FileReader reader;
+        if (newfile.exists()) {
+            reader = new FileReader(newfile);
+            BufferedReader buffer = new BufferedReader(reader);
+            strtok(buffer.readLine());
+        } else {
+            String maleFemale;
+            if (isBoy) {
+                maleFemale = "jungennamen";
             } else {
-                end = 1;
+                maleFemale = "maedchennamen";
             }
-            for (int j = 1; j <= end; j++) {
-                String newHtml = "http://www.vornamen.ch/"+maleFemale+"/" +(char) letter + "," + j + ".html";
-                strtok((Jsoup.connect(newHtml).get()).
-                        removeClass("trend").
-                        removeClass("jungencharts").
-                        removeClass("maedchencharts").
-                        select("a[href*=../name/]").text());
+            for (int letter = 97; letter < 123; letter++) {
+                String html = "http://www.vornamen.ch/" + maleFemale + "/" + (char) letter + ".html";
+                String lastPage = (Jsoup.connect(html).get()
+                        .select("a[title*=Zur letzten Seite]").attr("href"));
+
+                int end;
+                if (lastPage.compareTo("") != 0) {
+                    end = Integer.parseInt((String) lastPage.subSequence(2, lastPage.indexOf('.')));
+                } else {
+                    end = 1;
+                }
+                for (int j = 1; j <= end; j++) {
+                    String newHtml = "http://www.vornamen.ch/" + maleFemale + "/" + (char) letter + "," + j + ".html";
+                    strtok((Jsoup.connect(newHtml).get()).
+                            removeClass("trend").
+                            removeClass("jungencharts").
+                            removeClass("maedchencharts").
+                            select("a[href*=../name/]").text());
+                }
             }
+
+            saveNames(file);
         }
+
     }
 
-    private static void strtok(String text) throws IOException {
+    public static void saveNames(File file) throws IOException, URISyntaxException {
+        String txtName;
+        if (isBoy) {
+            txtName = "\\namesBoy.txt";
+        } else {
+            txtName = "\\namesGirl.txt";
+        }
+
+        File newfile = new File(file.getParentFile().toString() + txtName);
+        PrintWriter writer;
+        writer = new PrintWriter(newfile, "UTF-8");
+        writer.println(names);
+        writer.close();
+    }
+
+    public static void strtok(String text) throws IOException {
         StringTokenizer stok = new StringTokenizer(text);
         for (int i = 0; i < stok.countTokens(); i++) {
             names.add(stok.nextToken());
@@ -46,21 +82,22 @@ public class RandomNameGenerator {
     }
 
 
-    private static String randomNameGenerator() throws IOException {
+    public static String randomNameGenerator() throws IOException, URISyntaxException {
         namesParser();
         List<String> namen = new ArrayList<>(names.size());
+        /*names.parallelStream().forEach(namen::add);*/
         namen.addAll(names);
         return namen.get(new Random().nextInt(names.size()));
     }
 
-    private static void userInteraction() {
-        Scanner input= new Scanner(System.in);
+    public static void userInteraction() {
+        Scanner input = new Scanner(System.in);
         System.out.println("Schould the name for a girl (girl, g, m,) or a boy (boy, b, j)? (Please insert one word/character in the free space)");
-        String gender= input.next();
+        String gender = input.next();
         genderDecider(gender);
     }
 
-    private static void genderDecider(String gender) {
+    public static void genderDecider(String gender) {
         switch (gender) {
             case "m":
             case "g":
@@ -79,7 +116,8 @@ public class RandomNameGenerator {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, URISyntaxException {
+        userInteraction();
         System.out.println(randomNameGenerator());
     }
 
