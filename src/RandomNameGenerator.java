@@ -1,5 +1,3 @@
-/*Copyright AlerpCoder*/
-
 import org.jsoup.Jsoup;
 
 import java.io.*;
@@ -11,11 +9,10 @@ public class RandomNameGenerator {
 
     private static boolean isBoy = false;
 
-    public static void namesParser() throws IOException, URISyntaxException {
-        //TODO Parallel mit Threads schreiben damit
-        Thread[] threads = new Thread[3];
+    private static void namesParser() throws IOException, URISyntaxException, InterruptedException {
         File file = new File(RandomNameGenerator.class.getClassLoader().getResource("RandomNameGenerator.class").toURI());
         String txtName;
+
         if (isBoy) {
             txtName = "\\namesBoy.txt";
         } else {
@@ -24,12 +21,12 @@ public class RandomNameGenerator {
 
         File newfile = new File(file.getParentFile().toString() + txtName);
         FileReader reader;
-
         if (newfile.exists()) {
             reader = new FileReader(newfile);
             BufferedReader buffer = new BufferedReader(reader);
             strtok(buffer.readLine());
         } else {
+            Thread[] threads = new Thread[3];
             String maleFemale;
             if (isBoy) {
                 maleFemale = "jungennamen";
@@ -38,26 +35,30 @@ public class RandomNameGenerator {
             }
 
             int start = 97;
-            int mid = (97 - 123) / 3;
+            int mid = (123 - 97) / 3;
             int end;
-            int rest = (97 - 123) % 3;
+            int rest = (123 - 97) % 3;
             for (int i = 0; i < threads.length; i++) {
-                end = start + mid;
 
-                threads[i] = new WebsiteDL(start, end, maleFemale);
-                start = start + mid;
-                end= (i==0)?end=end+rest;
-                if (i == 0) {
-                    end += rest;
 
+                if (i == 2) {
+                    end = start + mid + rest;
+                } else {
+                    end = start + mid;
                 }
+                threads[i] = new WebsiteDL(start, end, maleFemale);
+                start = end;
+                threads[i].start();
+            }
+            for (Thread thread : threads) {
+                thread.join();
             }
             saveNames(file);
         }
     }
 
 
-    public static void saveNames(File file) throws IOException, URISyntaxException {
+    private static void saveNames(File file) throws IOException, URISyntaxException {
         String txtName;
         if (isBoy) {
             txtName = "\\namesBoy.txt";
@@ -72,7 +73,7 @@ public class RandomNameGenerator {
         writer.close();
     }
 
-    public static void strtok(String text) throws IOException {
+    private static void strtok(String text) throws IOException {
         StringTokenizer stok = new StringTokenizer(text);
         for (int i = 0; i < stok.countTokens(); i++) {
             names.add(stok.nextToken());
@@ -80,22 +81,21 @@ public class RandomNameGenerator {
     }
 
 
-    public static String randomNameGenerator() throws IOException, URISyntaxException {
+    private static String randomNameGenerator() throws IOException, URISyntaxException, InterruptedException {
         namesParser();
         List<String> namen = new ArrayList<>(names.size());
-        /*names.parallelStream().forEach(namen::add);*/
         namen.addAll(names);
         return namen.get(new Random().nextInt(names.size()));
     }
 
-    public static void userInteraction() {
+    private static void userInteraction() {
         Scanner input = new Scanner(System.in);
         System.out.println("Schould the name for a girl (girl, g, m,) or a boy (boy, b, j)? (Please insert one word/character in the free space)");
         String gender = input.next();
         genderDecider(gender);
     }
 
-    public static void genderDecider(String gender) {
+    private static void genderDecider(String gender) {
         switch (gender) {
             case "m":
             case "g":
@@ -115,18 +115,15 @@ public class RandomNameGenerator {
     }
 
 
-    static class WebsiteDL extends Thread {
-        /*websiteDL(int start, int end){*/
+   private static class WebsiteDL extends Thread {
         int start;
         int end;
         String maleFemale;
-        RandomNameGenerator test;
 
-        public WebsiteDL(int start, int end, String maleFemale) {
+        private WebsiteDL(int start, int end, String maleFemale) {
             this.start = start;
             this.end = end;
             this.maleFemale = maleFemale;
-            this.test = test;
         }
 
         public void run() {
@@ -163,7 +160,7 @@ public class RandomNameGenerator {
     }
 
 
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
         userInteraction();
         System.out.println(randomNameGenerator());
     }
